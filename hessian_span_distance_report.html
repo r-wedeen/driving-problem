@@ -472,7 +472,7 @@
         </p>
         <p>
           Each algorithm performs batch gradient descent with datasets that are chosen to drive \(\theta\) to \(\theta^\star\).
-          The dataset consists of sampled input points \(x_1,\ldots,x_N \in X\) and a target function
+          A single batch of the dataset consists of sampled input points \(x_1,\ldots,x_N \in X\) and a target function
           \(F^\star:X\rightarrow \mathbb R\). The corresponding loss is
           \(L(\theta)=\frac12\sum_{i=1}^N(F_\theta(x_i)-F^\star(x_i))^2\) and one step of batch gradient descent gives
           \(\theta_{new} = \theta + \Delta \theta\) where
