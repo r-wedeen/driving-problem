@@ -113,7 +113,7 @@ Derivative-span `history.csv` rows include additional diagnostics such as
 Open the minimal comparison interface directly:
 
 ```text
-hessian_span_distance_report.html
+report.html
 ```
 
 It compares gradient span, Hessian span, and 2-Jet span from the same initial
@@ -127,7 +127,7 @@ files so the browser can use the Worker-backed LAPACK bundle:
 python3 -m http.server 8765
 ```
 
-Then open `http://127.0.0.1:8765/hessian_span_distance_report.html`. Opening the
+Then open `http://127.0.0.1:8765/report.html`. Opening the
 HTML file directly still works, but it falls back to loading the LAPACK bundle on
 the main browser thread because many browsers restrict local-file Workers.
 
