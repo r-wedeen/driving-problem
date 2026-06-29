@@ -465,8 +465,8 @@
       </p>
       <div class="algorithm-setup">
         <p>
-          An initial parameter \(\theta_0\) is chosen according to the layerwise Gaussian initialization
-          \(W_\ell[a,b]\sim\mathcal N(0,1/n_{\ell-1})\), independently over all weights, with no biases,
+          An initial parameter \(\theta_0\) is chosen by drawing the entries of each weight matrix independently
+          from the Gaussian distribution \(\mathcal N(0,1/n_{\ell-1})\), with no biases,
           and a final parameter \(\theta^\star\) is chosen by drawing \(z\sim\mathcal N(0,I_{\dim M})\) and setting
           \(\theta^\star=\theta_0+z/\|z\|\). These are shared and fixed across all 3 algorithms.
         </p>
