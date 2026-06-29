@@ -1,0 +1,1614 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Driving Problem</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [["\\(", "\\)"], ["$", "$"]],
+        displayMath: [["\\[", "\\]"]]
+      },
+      svg: { fontCache: "global" }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17212b;
+      --muted: #5d6875;
+      --line: #d7e0e8;
+      --panel: #ffffff;
+      --page: #eef3f7;
+      --blue: #2364aa;
+      --green: #16845b;
+      --amber: #c77714;
+      --red: #b42318;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+
+    header {
+      background: #162433;
+      color: #f8fbfd;
+      padding: 24px 28px 20px;
+    }
+
+    .wrap {
+      width: min(1320px, calc(100vw - 32px));
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    main {
+      padding: 22px 0 36px;
+    }
+
+    .panel,
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(24, 38, 52, 0.08);
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .controls {
+      padding: 16px;
+    }
+
+    .algo-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .algo-head h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      min-height: 30px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #f7fafc;
+      color: var(--muted);
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .algo-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .algo-fields {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.2fr) minmax(110px, 0.8fr);
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 750;
+    }
+
+    input {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #aebdca;
+      border-radius: 7px;
+      background: #ffffff;
+      color: var(--ink);
+      font: inherit;
+      padding: 9px 10px;
+    }
+
+    button {
+      appearance: none;
+      min-height: 42px;
+      border: 1px solid var(--blue);
+      border-radius: 7px;
+      background: var(--blue);
+      color: #ffffff;
+      font: inherit;
+      font-weight: 760;
+      padding: 9px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button:disabled {
+      cursor: default;
+      opacity: 0.58;
+    }
+
+    input:focus,
+    button:focus {
+      outline: 3px solid rgba(35, 100, 170, 0.22);
+      outline-offset: 2px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .metric {
+      min-height: 86px;
+      padding: 13px 14px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 750;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 24px;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chart-panel {
+      margin-top: 16px;
+      padding: 16px;
+    }
+
+    .chart-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .chart-head h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .chart-head span {
+      color: var(--muted);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 420px;
+      border-radius: 6px;
+      background: #ffffff;
+    }
+
+    .plot-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .plot-controls button {
+      min-width: 48px;
+      padding-left: 14px;
+      padding-right: 14px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 26px;
+      height: 3px;
+      border-radius: 99px;
+      background: var(--blue);
+    }
+
+    .legend i.previous {
+      background: var(--amber);
+    }
+
+    .legend i.combined {
+      background: var(--green);
+    }
+
+    .algorithm-notes {
+      margin-top: 16px;
+      padding: 16px;
+    }
+
+    .algorithm-notes h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .algorithm-note-intro {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .algorithm-setup {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .algorithm-note-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .algorithm-note h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .algorithm-setup p,
+    .algorithm-note p,
+    .algorithm-setup ul,
+    .algorithm-note ul {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .algorithm-setup ul,
+    .algorithm-note ul {
+      padding-left: 18px;
+    }
+
+    .algorithm-setup p + p,
+    .algorithm-note p + p {
+      margin-top: 9px;
+    }
+
+    .algorithm-setup li,
+    .algorithm-note li {
+      margin: 0 0 7px;
+    }
+
+    .algorithm-setup li:last-child,
+    .algorithm-note li:last-child {
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 760px) {
+      .config-grid,
+      .algo-fields,
+      .summary,
+      .algorithm-note-grid {
+        grid-template-columns: 1fr;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .plot-controls button {
+        width: auto;
+      }
+
+      canvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Driving Problem</h1>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="config-grid">
+      <section class="panel controls">
+        <div class="algo-head">
+          <h2>Gradient span</h2>
+          <div class="algo-meta">
+            <span class="rank-badge" id="gradientParametersBadge">parameters: --</span>
+            <span class="rank-badge" id="gradientRankBadge">max rank: --</span>
+          </div>
+        </div>
+        <div class="algo-fields">
+          <div class="field">
+            <label for="gradientWidthsInput">Architecture widths</label>
+            <input id="gradientWidthsInput" value="25,25,25,1" autocomplete="off" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="gradientPointsInput">Sampled points</label>
+            <input id="gradientPointsInput" type="number" min="1" max="256" step="1" value="225">
+          </div>
+        </div>
+      </section>
+
+      <section class="panel controls">
+        <div class="algo-head">
+          <h2>Hessian span</h2>
+          <div class="algo-meta">
+            <span class="rank-badge" id="hessianParametersBadge">parameters: --</span>
+            <span class="rank-badge" id="hessianRankBadge">max rank: --</span>
+          </div>
+        </div>
+        <div class="algo-fields">
+          <div class="field">
+            <label for="hessianWidthsInput">Architecture widths</label>
+            <input id="hessianWidthsInput" value="25,25,25,1" autocomplete="off" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="hessianPointsInput">Sampled points</label>
+            <input id="hessianPointsInput" type="number" min="1" max="256" step="1" value="9">
+          </div>
+        </div>
+      </section>
+
+      <section class="panel controls">
+        <div class="algo-head">
+          <h2>2-Jet span</h2>
+          <div class="algo-meta">
+            <span class="rank-badge" id="combinedParametersBadge">parameters: --</span>
+            <span class="rank-badge" id="combinedRankBadge">max rank: --</span>
+          </div>
+        </div>
+        <div class="algo-fields">
+          <div class="field">
+            <label for="combinedWidthsInput">Architecture widths</label>
+            <input id="combinedWidthsInput" value="25,25,25,1" autocomplete="off" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="combinedPointsInput">Sampled points</label>
+            <input id="combinedPointsInput" type="number" min="1" max="256" step="1" value="8">
+          </div>
+        </div>
+      </section>
+
+    </section>
+
+    <section class="summary" id="summary"></section>
+
+    <section class="panel chart-panel">
+      <div class="chart-head">
+        <h2>Distance to <math><msup><mi>&theta;</mi><mo>&#8902;</mo></msup></math></h2>
+        <span id="chartLabel"></span>
+      </div>
+      <canvas id="distanceChart"></canvas>
+      <div class="legend">
+        <span><i class="previous"></i>Gradient span</span>
+        <span><i></i>Hessian span</span>
+        <span><i class="combined"></i>2-Jet span</span>
+      </div>
+      <div class="plot-controls">
+        <button id="runButton" aria-label="Play" title="Play">&#9654;</button>
+      </div>
+    </section>
+
+    <section class="panel algorithm-notes">
+      <h2>Algorithm Summaries:</h2>
+      <p class="algorithm-note-intro">
+        We assume the MLP has output dimension 1 and we denote the input space by \(X\) and the parameter space by \(M\).
+      </p>
+      <div class="algorithm-setup">
+        <p>
+          An initial parameter \(\theta_0\) is chosen according to the layerwise Gaussian initialization
+          \(W_\ell[a,b]\sim\mathcal N(0,1/n_{\ell-1})\), independently over all weights, with no biases,
+          and a final parameter \(\theta^\star\) is chosen by drawing \(z\sim\mathcal N(0,I_{\dim M})\) and setting
+          \(\theta^\star=\theta_0+z/\|z\|\). These are shared and fixed across all 3 algorithms.
+        </p>
+        <p>
+          Each algorithm performs batch gradient descent with datasets that are chosen to drive \(\theta\) to \(\theta^\star\).
+          The dataset consists of sampled input points \(x_1,\ldots,x_N \in X\) and a target function
+          \(F^\star:X\rightarrow \mathbb R\). The corresponding loss is
+          \(L(\theta)=\frac12\sum_{i=1}^N(F_\theta(x_i)-F^\star(x_i))^2\) and one step of batch gradient descent gives
+          \(\theta_{new} = \theta + \Delta \theta\) where
+          \(\Delta \theta = \eta \sum_{i=1}^N r_i \cdot g_i\), \(r_i = F^\star(x_i) - F_\theta(x_i)\), and
+          \(g_i = \nabla_\theta F_\theta(x_i)\).
+          For each algorithm, we choose \(F^\star\) such that \(\Delta \theta\) is the orthogonal projection of
+          \(w := \theta^\star - \theta\) onto a certain subspace \(V \subset T_\theta M\) that is given as follows:
+        </p>
+      </div>
+      <div class="algorithm-note-grid">
+        <div class="algorithm-note">
+          <h3>Gradient span</h3>
+          <p>
+            Set \(V=\operatorname{span}\{g_1,\ldots,g_N\}\).
+            Equivalently, with \(G=[g_1\ \cdots\ g_N]\), choose \(c\) minimizing \(\|Gc-w\|^2\).
+            Then \(\Delta\theta=Gc=\Pi_Vw\).
+          </p>
+          <p>
+            The corresponding residual is \(r_i=F^\star(x_i)-F_\theta(x_i)=c_i/\eta\), i.e.
+            \(F^\star(x_i)=F_\theta(x_i)+c_i/\eta\).
+          </p>
+        </div>
+        <div class="algorithm-note">
+          <h3>Hessian span</h3>
+          <p>
+            Let \(H_i=\nabla_x\nabla_\theta F_\theta(x_i):T_{x_i}X\to T_\theta M\), and set
+            \(V=\operatorname{span}\{\operatorname{im}H_i:1\le i\le N\}\). Choose \(v_i\in T_{x_i}X\)
+            minimizing \(\|\sum_iH_i v_i-w\|^2\). Then \(\Delta\theta=\sum_iH_i v_i=\Pi_Vw\).
+          </p>
+          <p>
+            The corresponding finite-difference dataset uses paired points \(x_i'=x_i+\delta v_i\), with \(\delta>0\)
+            small, and residuals \(r(x_i)=-1/(\eta\delta)\), \(r(x_i')=1/(\eta\delta)\). Equivalently,
+            \(F^\star(x_i)=F_\theta(x_i)-1/(\eta\delta)\) and
+            \(F^\star(x_i')=F_\theta(x_i')+1/(\eta\delta)\). Then
+            \(\eta(r(x_i')\nabla_\theta F_\theta(x_i')+r(x_i)\nabla_\theta F_\theta(x_i))\approx H_i v_i\).
+          </p>
+        </div>
+        <div class="algorithm-note">
+          <h3>2-Jet span</h3>
+          <p>
+            Set \(V=\operatorname{span}\{g_i,\operatorname{im}H_i:1\le i\le N\}\). Choose \(a_i\in\mathbb R\)
+            and \(v_i\in T_{x_i}X\) minimizing \(\|\sum_i a_i g_i+\sum_iH_i v_i-w\|^2\). Then
+            \(\Delta\theta=\sum_i a_i g_i+\sum_iH_i v_i=\Pi_Vw\).
+          </p>
+          <p>
+            The corresponding finite-difference dataset uses \(x_i'=x_i+\delta v_i\), with residuals
+            \(r(x_i)=a_i/\eta-1/(\eta\delta)\) and \(r(x_i')=1/(\eta\delta)\). Equivalently,
+            \(F^\star(x_i)=F_\theta(x_i)+a_i/\eta-1/(\eta\delta)\) and
+            \(F^\star(x_i')=F_\theta(x_i')+1/(\eta\delta)\).
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const runButton = document.getElementById("runButton");
+    const summaryEl = document.getElementById("summary");
+    const chartLabel = document.getElementById("chartLabel");
+    const canvas = document.getElementById("distanceChart");
+    const gradientRankBadge = document.getElementById("gradientRankBadge");
+    const gradientParametersBadge = document.getElementById("gradientParametersBadge");
+    const hessianRankBadge = document.getElementById("hessianRankBadge");
+    const hessianParametersBadge = document.getElementById("hessianParametersBadge");
+    const combinedRankBadge = document.getElementById("combinedRankBadge");
+    const combinedParametersBadge = document.getElementById("combinedParametersBadge");
+    const PLAY_SYMBOL = "\u25b6";
+    const PAUSE_SYMBOL = "\u275a\u275a";
+    const PROJECTION_WORKER_URL = "lapack_projection_worker.js";
+    const PROJECTION_BUNDLE_URL = "vendor/lapack_projection_bundle.js";
+    const GRAM_FALLBACK_COLUMN_LIMIT = 256;
+    const PROJECTION_ENTRY_LIMIT = 2000000;
+
+    let runToken = 0;
+    let gradientHistory = [];
+    let hessianHistory = [];
+    let combinedHistory = [];
+    let activeSession = null;
+    let projectionWorker = null;
+    let projectionWorkerReady = null;
+    let projectionWorkerFailed = false;
+    let projectionRequestId = 0;
+    let projectionBundleLoad = null;
+    const projectionPending = new Map();
+
+    const colors = {
+      ink: "#17212b",
+      muted: "#5d6875",
+      grid: "#e5ebf0",
+      blue: "#2364aa",
+      green: "#16845b",
+      amber: "#c77714",
+      red: "#b42318"
+    };
+
+    function rejectProjectionPending(error) {
+      for (const pending of projectionPending.values()) pending.reject(error);
+      projectionPending.clear();
+    }
+
+    function getProjectionWorker() {
+      if (projectionWorkerFailed || !window.Worker || window.location.protocol === "file:") {
+        return Promise.reject(new Error("Projection Worker is unavailable."));
+      }
+      if (projectionWorkerReady) return projectionWorkerReady;
+
+      projectionWorkerReady = new Promise((resolve, reject) => {
+        let ready = false;
+        const worker = new Worker(PROJECTION_WORKER_URL);
+        const timeout = window.setTimeout(() => {
+          if (ready) return;
+          projectionWorkerFailed = true;
+          worker.terminate();
+          projectionWorkerReady = null;
+          reject(new Error("Projection Worker did not start."));
+        }, 4000);
+
+        worker.onmessage = (event) => {
+          const data = event.data || {};
+          if (data.type === "ready") {
+            ready = true;
+            window.clearTimeout(timeout);
+            projectionWorker = worker;
+            resolve(worker);
+            return;
+          }
+
+          const pending = projectionPending.get(data.id);
+          if (!pending) return;
+          projectionPending.delete(data.id);
+          if (data.error) {
+            pending.reject(new Error(data.error));
+            return;
+          }
+          pending.resolve({
+            update: new Float64Array(data.update),
+            rank: data.rank,
+            maxSingular: Number.NaN
+          });
+        };
+
+        worker.onerror = (event) => {
+          const error = new Error(event.message || "Projection Worker failed.");
+          projectionWorkerFailed = true;
+          projectionWorkerReady = null;
+          projectionWorker = null;
+          worker.terminate();
+          if (!ready) {
+            window.clearTimeout(timeout);
+            reject(error);
+          }
+          rejectProjectionPending(error);
+        };
+      });
+
+      return projectionWorkerReady;
+    }
+
+    function projectColumnMajorInWorker(matrix, vector, rows, cols, config) {
+      return getProjectionWorker().then((worker) => new Promise((resolve, reject) => {
+        const id = ++projectionRequestId;
+        projectionPending.set(id, { resolve, reject });
+        worker.postMessage({
+          id,
+          matrix: matrix.buffer,
+          vector: vector.buffer,
+          rows,
+          cols,
+          rcond: config.svdTol
+        });
+      }));
+    }
+
+    function loadProjectionBundleInMain() {
+      if (globalThis.CustomLapackProjection) return Promise.resolve(globalThis.CustomLapackProjection);
+      if (projectionBundleLoad) return projectionBundleLoad;
+      projectionBundleLoad = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = PROJECTION_BUNDLE_URL;
+        script.async = true;
+        script.onload = () => {
+          if (globalThis.CustomLapackProjection) resolve(globalThis.CustomLapackProjection);
+          else reject(new Error("Projection bundle loaded without exposing a solver."));
+        };
+        script.onerror = () => reject(new Error("Projection bundle could not be loaded."));
+        document.head.appendChild(script);
+      });
+      return projectionBundleLoad;
+    }
+
+    async function projectColumnMajorWithLapack(matrix, vector, rows, cols, config) {
+      try {
+        return await projectColumnMajorInWorker(matrix, vector, rows, cols, config);
+      } catch {
+        const solver = await loadProjectionBundleInMain();
+        return solver.projectLeastSquares(matrix, vector, rows, cols, config.svdTol);
+      }
+    }
+
+    function formatNumber(value, digits = 4) {
+      if (!Number.isFinite(value)) return "0";
+      const abs = Math.abs(value);
+      if (abs !== 0 && (abs < 0.001 || abs >= 10000)) return value.toExponential(2);
+      return value.toLocaleString(undefined, {
+        maximumFractionDigits: digits,
+        minimumFractionDigits: 0
+      });
+    }
+
+    function formatInteger(value) {
+      if (!Number.isFinite(value)) return "0";
+      return Math.round(value).toLocaleString();
+    }
+
+    function metric(label, value) {
+      return `<div class="metric"><span>${label}</span><strong>${value}</strong></div>`;
+    }
+
+    function parseWidths(raw) {
+      const widths = raw.split(",")
+        .map((part) => Number.parseInt(part.trim(), 10))
+        .filter((value) => Number.isFinite(value));
+      if (widths.length < 2) throw new Error("Architecture widths need at least input and output dimensions.");
+      if (widths.some((value) => value <= 0)) throw new Error("Architecture widths must be positive integers.");
+      if (widths[widths.length - 1] !== 1) throw new Error("The Hessian-span algorithm currently requires scalar output.");
+      return widths;
+    }
+
+    function layerOffsets(widths) {
+      const offsets = [];
+      let count = 0;
+      for (let layer = 1; layer < widths.length; layer += 1) {
+        offsets.push(count);
+        count += widths[layer] * widths[layer - 1];
+      }
+      return { offsets, parameterCount: count };
+    }
+
+    function readConfig(kind) {
+      const prefix = kind;
+      const widths = parseWidths(document.getElementById(`${prefix}WidthsInput`).value);
+      const batchSize = Number.parseInt(document.getElementById(`${prefix}PointsInput`).value, 10);
+      if (!Number.isFinite(batchSize) || batchSize <= 0) throw new Error("Sampled points must be positive.");
+      const { offsets, parameterCount } = layerOffsets(widths);
+      const inputDim = widths[0];
+      let subspaceColumns = batchSize;
+      if (kind === "hessian") subspaceColumns = batchSize * inputDim;
+      if (kind === "combined") subspaceColumns = batchSize * (inputDim + 1);
+      const entries = parameterCount * subspaceColumns;
+      if (entries > PROJECTION_ENTRY_LIMIT) throw new Error(`${kind} span matrix would have ${entries.toLocaleString()} entries. Reduce the architecture or sampled points.`);
+      return {
+        kind,
+        widths,
+        batchSize,
+        offsets,
+        parameterCount,
+        inputDim,
+        subspaceColumns,
+        maxRank: Math.min(parameterCount, subspaceColumns),
+        seed: 0,
+        weightScale: 1,
+        targetDeltaNorm: 1,
+        inputScale: 1,
+        svdTol: 1e-12
+      };
+    }
+
+    function widthsMatch(a, b) {
+      return a.length === b.length && a.every((value, index) => value === b[index]);
+    }
+
+    function badgesFor(kind) {
+      if (kind === "gradient") return { rank: gradientRankBadge, parameters: gradientParametersBadge };
+      if (kind === "hessian") return { rank: hessianRankBadge, parameters: hessianParametersBadge };
+      return { rank: combinedRankBadge, parameters: combinedParametersBadge };
+    }
+
+    function setBadgeState(badges, isError) {
+      for (const badge of badges) {
+        badge.style.color = isError ? colors.red : "";
+        badge.style.borderColor = isError ? "rgba(180, 35, 24, 0.35)" : "";
+      }
+    }
+
+    function setRankBadges(kind, rank, parameters, isError = false) {
+      const badges = badgesFor(kind);
+      const rankText = typeof rank === "number" ? formatInteger(rank) : rank;
+      const parametersText = typeof parameters === "number" ? formatInteger(parameters) : parameters;
+      badges.parameters.textContent = `parameters: ${parametersText}`;
+      badges.rank.textContent = `max rank: ${rankText}`;
+      setBadgeState([badges.rank, badges.parameters], isError);
+    }
+
+    function updateRankBadges() {
+      for (const kind of ["gradient", "hessian", "combined"]) {
+        try {
+          const config = readConfig(kind);
+          setRankBadges(kind, config.maxRank, config.parameterCount);
+        } catch {
+          setRankBadges(kind, "--", "--", true);
+        }
+      }
+    }
+
+    function readSharedConfigs() {
+      const gradientConfig = readConfig("gradient");
+      const hessianConfig = readConfig("hessian");
+      const combinedConfig = readConfig("combined");
+      if (
+        !widthsMatch(gradientConfig.widths, hessianConfig.widths)
+        || !widthsMatch(gradientConfig.widths, combinedConfig.widths)
+      ) {
+        throw new Error("Architecture widths must match to share the same initialization and target parameters.");
+      }
+      return { gradientConfig, hessianConfig, combinedConfig };
+    }
+
+    function resetHistoriesToInitial(gradientConfig, hessianConfig, combinedConfig) {
+      gradientHistory = [{
+        step: 0,
+        distance: gradientConfig.targetDeltaNorm,
+        rank: 0
+      }];
+      hessianHistory = [{
+        step: 0,
+        distance: hessianConfig.targetDeltaNorm,
+        rank: 0
+      }];
+      combinedHistory = [{
+        step: 0,
+        distance: combinedConfig.targetDeltaNorm,
+        rank: 0
+      }];
+    }
+
+    function resetPreviewFromInputs() {
+      try {
+        const { gradientConfig, hessianConfig, combinedConfig } = readSharedConfigs();
+        resetHistoriesToInitial(gradientConfig, hessianConfig, combinedConfig);
+        renderSummary(gradientConfig, hessianConfig, combinedConfig);
+        drawChart({
+          gradient: gradientConfig,
+          hessian: hessianConfig,
+          combined: combinedConfig
+        });
+      } catch (error) {
+        chartLabel.textContent = error.message;
+        drawChart();
+      }
+    }
+
+    function handleConfigInput() {
+      updateRankBadges();
+      if (activeSession && !activeSession.completed) {
+        activeSession.completed = true;
+        activeSession.paused = false;
+        runToken += 1;
+        setRunButton(PLAY_SYMBOL, "Play");
+      }
+      resetPreviewFromInputs();
+    }
+
+    function attachRankListeners() {
+      for (const id of [
+        "gradientWidthsInput",
+        "gradientPointsInput",
+        "hessianWidthsInput",
+        "hessianPointsInput",
+        "combinedWidthsInput",
+        "combinedPointsInput"
+      ]) {
+        document.getElementById(id).addEventListener("input", handleConfigInput);
+      }
+    }
+
+    function makeRng(seed) {
+      let state = seed >>> 0;
+      return function rng() {
+        state = (state + 0x6D2B79F5) >>> 0;
+        let value = state;
+        value = Math.imul(value ^ (value >>> 15), value | 1);
+        value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+        return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function normalSample(rng) {
+      const u1 = Math.max(rng(), Number.MIN_VALUE);
+      const u2 = rng();
+      return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    }
+
+    function initializeTheta(config, rng) {
+      const theta = new Float64Array(config.parameterCount);
+      for (let layer = 1; layer < config.widths.length; layer += 1) {
+        const inDim = config.widths[layer - 1];
+        const outDim = config.widths[layer];
+        const scale = config.weightScale / Math.sqrt(inDim);
+        const offset = config.offsets[layer - 1];
+        for (let i = 0; i < outDim * inDim; i += 1) {
+          theta[offset + i] = normalSample(rng) * scale;
+        }
+      }
+      return theta;
+    }
+
+    function makeTargetTheta(theta0, config, rng) {
+      const thetaStar = new Float64Array(theta0.length);
+      const delta = new Float64Array(theta0.length);
+      let normSq = 0;
+      for (let i = 0; i < delta.length; i += 1) {
+        delta[i] = normalSample(rng);
+        normSq += delta[i] * delta[i];
+      }
+      const norm = Math.sqrt(normSq) || 1;
+      for (let i = 0; i < theta0.length; i += 1) {
+        thetaStar[i] = theta0[i] + config.targetDeltaNorm * delta[i] / norm;
+      }
+      return thetaStar;
+    }
+
+    function sampleInputs(config, rng) {
+      const x = new Float64Array(config.batchSize * config.inputDim);
+      for (let sample = 0; sample < config.batchSize; sample += 1) {
+        let normSq = 0;
+        const base = sample * config.inputDim;
+        for (let i = 0; i < config.inputDim; i += 1) {
+          const value = normalSample(rng);
+          x[base + i] = value;
+          normSq += value * value;
+        }
+        const norm = Math.sqrt(normSq) || 1;
+        for (let i = 0; i < config.inputDim; i += 1) {
+          x[base + i] = config.inputScale * x[base + i] / norm;
+        }
+      }
+      return x;
+    }
+
+    function forwardWithCache(theta, x, config) {
+      const activations = [x];
+      let h = x;
+      for (let layer = 1; layer < config.widths.length; layer += 1) {
+        const inDim = config.widths[layer - 1];
+        const outDim = config.widths[layer];
+        const offset = config.offsets[layer - 1];
+        const z = new Float64Array(config.batchSize * outDim);
+        for (let sample = 0; sample < config.batchSize; sample += 1) {
+          const hBase = sample * inDim;
+          const zBase = sample * outDim;
+          for (let out = 0; out < outDim; out += 1) {
+            let sum = 0;
+            const thetaBase = offset + out * inDim;
+            for (let input = 0; input < inDim; input += 1) {
+              sum += h[hBase + input] * theta[thetaBase + input];
+            }
+            z[zBase + out] = sum;
+          }
+        }
+        if (layer < config.widths.length - 1) {
+          h = new Float64Array(z.length);
+          for (let i = 0; i < z.length; i += 1) h[i] = Math.tanh(z[i]);
+        } else {
+          h = z;
+        }
+        activations.push(h);
+      }
+      return { activations, output: h };
+    }
+
+    function identity(size) {
+      const matrix = new Float64Array(size * size);
+      for (let i = 0; i < size; i += 1) matrix[i * size + i] = 1;
+      return matrix;
+    }
+
+    function inputParameterMatrix(theta, x, config) {
+      const cache = forwardWithCache(theta, x, config);
+      const numMatrices = config.widths.length - 1;
+      const cols = config.subspaceColumns;
+      const A = new Float64Array(config.parameterCount * cols);
+
+      for (let sample = 0; sample < config.batchSize; sample += 1) {
+        const activationSensitivities = [identity(config.inputDim)];
+
+        for (let matrix = 0; matrix < numMatrices; matrix += 1) {
+          const inDim = config.widths[matrix];
+          const outDim = config.widths[matrix + 1];
+          const offset = config.offsets[matrix];
+          const prevSensitivity = activationSensitivities[matrix];
+          const zSensitivity = new Float64Array(outDim * config.inputDim);
+
+          for (let out = 0; out < outDim; out += 1) {
+            const thetaBase = offset + out * inDim;
+            for (let k = 0; k < config.inputDim; k += 1) {
+              let sum = 0;
+              for (let input = 0; input < inDim; input += 1) {
+                sum += theta[thetaBase + input] * prevSensitivity[input * config.inputDim + k];
+              }
+              zSensitivity[out * config.inputDim + k] = sum;
+            }
+          }
+
+          if (matrix < numMatrices - 1) {
+            const nextSensitivity = new Float64Array(outDim * config.inputDim);
+            const activation = cache.activations[matrix + 1];
+            const actBase = sample * outDim;
+            for (let out = 0; out < outDim; out += 1) {
+              const value = activation[actBase + out];
+              const tanhDerivative = 1 - value * value;
+              for (let k = 0; k < config.inputDim; k += 1) {
+                nextSensitivity[out * config.inputDim + k] = tanhDerivative * zSensitivity[out * config.inputDim + k];
+              }
+            }
+            activationSensitivities.push(nextSensitivity);
+          } else {
+            activationSensitivities.push(zSensitivity);
+          }
+        }
+
+        const deltas = new Array(numMatrices);
+        const outputDim = config.widths[config.widths.length - 1];
+        deltas[numMatrices - 1] = new Float64Array(outputDim);
+        deltas[numMatrices - 1][0] = 1;
+
+        for (let matrix = numMatrices - 2; matrix >= 0; matrix -= 1) {
+          const layerDim = config.widths[matrix + 1];
+          const nextOutDim = config.widths[matrix + 2];
+          const nextOffset = config.offsets[matrix + 1];
+          const delta = new Float64Array(layerDim);
+          const activation = cache.activations[matrix + 1];
+          const actBase = sample * layerDim;
+
+          for (let input = 0; input < layerDim; input += 1) {
+            let sum = 0;
+            for (let out = 0; out < nextOutDim; out += 1) {
+              sum += deltas[matrix + 1][out] * theta[nextOffset + out * layerDim + input];
+            }
+            const hValue = activation[actBase + input];
+            delta[input] = sum * (1 - hValue * hValue);
+          }
+          deltas[matrix] = delta;
+        }
+
+        const deltaSensitivities = new Array(numMatrices);
+        deltaSensitivities[numMatrices - 1] = new Float64Array(outputDim * config.inputDim);
+
+        for (let matrix = numMatrices - 2; matrix >= 0; matrix -= 1) {
+          const layerDim = config.widths[matrix + 1];
+          const nextOutDim = config.widths[matrix + 2];
+          const nextOffset = config.offsets[matrix + 1];
+          const deltaSensitivity = new Float64Array(layerDim * config.inputDim);
+          const activation = cache.activations[matrix + 1];
+          const actBase = sample * layerDim;
+          const activationSensitivity = activationSensitivities[matrix + 1];
+
+          for (let input = 0; input < layerDim; input += 1) {
+            const hValue = activation[actBase + input];
+            const tanhDerivative = 1 - hValue * hValue;
+            let pulledDelta = 0;
+            for (let out = 0; out < nextOutDim; out += 1) {
+              pulledDelta += deltas[matrix + 1][out] * theta[nextOffset + out * layerDim + input];
+            }
+            for (let k = 0; k < config.inputDim; k += 1) {
+              let pulledDeltaSensitivity = 0;
+              for (let out = 0; out < nextOutDim; out += 1) {
+                pulledDeltaSensitivity += theta[nextOffset + out * layerDim + input]
+                  * deltaSensitivities[matrix + 1][out * config.inputDim + k];
+              }
+              const tanhDerivativeSensitivity = -2 * hValue * activationSensitivity[input * config.inputDim + k];
+              deltaSensitivity[input * config.inputDim + k] =
+                pulledDeltaSensitivity * tanhDerivative + pulledDelta * tanhDerivativeSensitivity;
+            }
+          }
+          deltaSensitivities[matrix] = deltaSensitivity;
+        }
+
+        for (let matrix = 0; matrix < numMatrices; matrix += 1) {
+          const inDim = config.widths[matrix];
+          const outDim = config.widths[matrix + 1];
+          const offset = config.offsets[matrix];
+          const hPrev = cache.activations[matrix];
+          const hBase = sample * inDim;
+          const hPrevSensitivity = activationSensitivities[matrix];
+          const delta = deltas[matrix];
+          const deltaSensitivity = deltaSensitivities[matrix];
+
+          for (let k = 0; k < config.inputDim; k += 1) {
+            const col = sample * config.inputDim + k;
+            for (let out = 0; out < outDim; out += 1) {
+              for (let input = 0; input < inDim; input += 1) {
+                const param = offset + out * inDim + input;
+                const value =
+                  deltaSensitivity[out * config.inputDim + k] * hPrev[hBase + input]
+                  + delta[out] * hPrevSensitivity[input * config.inputDim + k];
+                A[param * cols + col] = value;
+              }
+            }
+          }
+        }
+      }
+
+      return A;
+    }
+
+    function batchJacobian(theta, x, config) {
+      const cache = forwardWithCache(theta, x, config);
+      const rows = config.batchSize;
+      const jacobian = new Float64Array(rows * config.parameterCount);
+      const numMatrices = config.widths.length - 1;
+
+      for (let sample = 0; sample < config.batchSize; sample += 1) {
+        let delta = new Float64Array(1);
+        delta[0] = 1;
+
+        for (let matrix = numMatrices - 1; matrix >= 0; matrix -= 1) {
+          const inDim = config.widths[matrix];
+          const outDim = config.widths[matrix + 1];
+          const offset = config.offsets[matrix];
+          const h = cache.activations[matrix];
+          const hBase = sample * inDim;
+          const rowBase = sample * config.parameterCount + offset;
+
+          for (let out = 0; out < outDim; out += 1) {
+            const d = delta[out];
+            if (d === 0) continue;
+            const paramBase = rowBase + out * inDim;
+            for (let input = 0; input < inDim; input += 1) {
+              jacobian[paramBase + input] = d * h[hBase + input];
+            }
+          }
+
+          if (matrix > 0) {
+            const nextDelta = new Float64Array(inDim);
+            const activation = cache.activations[matrix];
+            const activationBase = sample * inDim;
+            for (let input = 0; input < inDim; input += 1) {
+              let sum = 0;
+              for (let out = 0; out < outDim; out += 1) {
+                sum += delta[out] * theta[offset + out * inDim + input];
+              }
+              const hValue = activation[activationBase + input];
+              nextDelta[input] = sum * (1 - hValue * hValue);
+            }
+            delta = nextDelta;
+          }
+        }
+      }
+
+      return jacobian;
+    }
+
+    function combinedJetMatrix(theta, x, config) {
+      const jacobian = batchJacobian(theta, x, config);
+      const hessianMatrix = inputParameterMatrix(theta, x, config);
+      const hessianCols = config.batchSize * config.inputDim;
+      const cols = config.batchSize * (config.inputDim + 1);
+      const A = new Float64Array(config.parameterCount * cols);
+
+      for (let p = 0; p < config.parameterCount; p += 1) {
+        const outBase = p * cols;
+        for (let sample = 0; sample < config.batchSize; sample += 1) {
+          A[outBase + sample] = jacobian[sample * config.parameterCount + p];
+        }
+        const hessianBase = p * hessianCols;
+        for (let col = 0; col < hessianCols; col += 1) {
+          A[outBase + config.batchSize + col] = hessianMatrix[hessianBase + col];
+        }
+      }
+
+      return A;
+    }
+
+    function vectorDifference(a, b) {
+      const out = new Float64Array(a.length);
+      for (let i = 0; i < a.length; i += 1) out[i] = a[i] - b[i];
+      return out;
+    }
+
+    function addInPlace(target, update) {
+      for (let i = 0; i < target.length; i += 1) target[i] += update[i];
+    }
+
+    function vectorNorm(vector) {
+      let sum = 0;
+      for (let i = 0; i < vector.length; i += 1) sum += vector[i] * vector[i];
+      return Math.sqrt(sum);
+    }
+
+    function jacobiEigenSymmetric(matrix, n) {
+      const a = new Float64Array(matrix);
+      const vectors = new Float64Array(n * n);
+      for (let i = 0; i < n; i += 1) vectors[i * n + i] = 1;
+      const maxSweeps = 90;
+
+      for (let sweep = 0; sweep < maxSweeps; sweep += 1) {
+        let maxOff = 0;
+        let maxDiag = 0;
+        for (let i = 0; i < n; i += 1) maxDiag = Math.max(maxDiag, Math.abs(a[i * n + i]));
+
+        for (let p = 0; p < n - 1; p += 1) {
+          for (let q = p + 1; q < n; q += 1) {
+            const pqIndex = p * n + q;
+            const apq = a[pqIndex];
+            const absApq = Math.abs(apq);
+            maxOff = Math.max(maxOff, absApq);
+            if (absApq <= 1e-12 * (maxDiag + 1)) continue;
+
+            const app = a[p * n + p];
+            const aqq = a[q * n + q];
+            const tau = (aqq - app) / (2 * apq);
+            const t = tau >= 0
+              ? 1 / (tau + Math.sqrt(1 + tau * tau))
+              : -1 / (-tau + Math.sqrt(1 + tau * tau));
+            const c = 1 / Math.sqrt(1 + t * t);
+            const s = t * c;
+
+            for (let k = 0; k < n; k += 1) {
+              if (k === p || k === q) continue;
+              const akp = a[k * n + p];
+              const akq = a[k * n + q];
+              const newKp = c * akp - s * akq;
+              const newKq = s * akp + c * akq;
+              a[k * n + p] = newKp;
+              a[p * n + k] = newKp;
+              a[k * n + q] = newKq;
+              a[q * n + k] = newKq;
+            }
+
+            a[p * n + p] = c * c * app - 2 * s * c * apq + s * s * aqq;
+            a[q * n + q] = s * s * app + 2 * s * c * apq + c * c * aqq;
+            a[p * n + q] = 0;
+            a[q * n + p] = 0;
+
+            for (let k = 0; k < n; k += 1) {
+              const vip = vectors[k * n + p];
+              const viq = vectors[k * n + q];
+              vectors[k * n + p] = c * vip - s * viq;
+              vectors[k * n + q] = s * vip + c * viq;
+            }
+          }
+        }
+        if (maxOff <= 1e-11 * (maxDiag + 1)) break;
+      }
+
+      const values = new Float64Array(n);
+      for (let i = 0; i < n; i += 1) values[i] = Math.max(0, a[i * n + i]);
+      return { values, vectors };
+    }
+
+    function projectColumnMajorWithGramFallback(A, w, rows, cols, config, lapackError = null) {
+      if (cols > GRAM_FALLBACK_COLUMN_LIMIT) {
+        const reason = lapackError ? ` (${lapackError.message})` : "";
+        throw new Error(`LAPACK projection solver failed${reason}; the Gram fallback supports at most ${GRAM_FALLBACK_COLUMN_LIMIT} columns.`);
+      }
+      const gram = new Float64Array(cols * cols);
+      const b = new Float64Array(cols);
+
+      for (let col = 0; col < cols; col += 1) {
+        const colBase = col * rows;
+        let bw = 0;
+        for (let row = 0; row < rows; row += 1) bw += A[colBase + row] * w[row];
+        b[col] = bw;
+
+        for (let other = 0; other <= col; other += 1) {
+          const otherBase = other * rows;
+          let sum = 0;
+          for (let row = 0; row < rows; row += 1) sum += A[colBase + row] * A[otherBase + row];
+          gram[col * cols + other] = sum;
+          gram[other * cols + col] = sum;
+        }
+      }
+
+      const eig = jacobiEigenSymmetric(gram, cols);
+      let maxEigen = 0;
+      for (const value of eig.values) maxEigen = Math.max(maxEigen, value);
+      const maxSingular = Math.sqrt(maxEigen);
+      const eigenTolerance = Math.pow(config.svdTol * Math.max(cols, rows) * Math.max(maxSingular, 1), 2);
+      const coeffs = new Float64Array(cols);
+      let rank = 0;
+
+      for (let component = 0; component < cols; component += 1) {
+        const lambda = eig.values[component];
+        if (lambda <= eigenTolerance) continue;
+        rank += 1;
+        let projection = 0;
+        for (let i = 0; i < cols; i += 1) projection += eig.vectors[i * cols + component] * b[i];
+        const scale = projection / lambda;
+        for (let i = 0; i < cols; i += 1) coeffs[i] += eig.vectors[i * cols + component] * scale;
+      }
+
+      const update = new Float64Array(rows);
+      for (let row = 0; row < rows; row += 1) {
+        let sum = 0;
+        for (let col = 0; col < cols; col += 1) sum += A[col * rows + row] * coeffs[col];
+        update[row] = sum;
+      }
+      return { update, rank, maxSingular };
+    }
+
+    async function projectColumnMajor(A, w, rows, cols, config) {
+      try {
+        return await projectColumnMajorWithLapack(A, w, rows, cols, config);
+      } catch (error) {
+        return projectColumnMajorWithGramFallback(A, w, rows, cols, config, error);
+      }
+    }
+
+    function parameterRowsToColumnMajor(A, rows, cols) {
+      const out = new Float64Array(A.length);
+      for (let row = 0; row < rows; row += 1) {
+        const rowBase = row * cols;
+        for (let col = 0; col < cols; col += 1) out[col * rows + row] = A[rowBase + col];
+      }
+      return out;
+    }
+
+    async function projectWithHessianSpan(A, w, config) {
+      const cols = config.subspaceColumns;
+      const parameterCount = config.parameterCount;
+      return projectColumnMajor(parameterRowsToColumnMajor(A, parameterCount, cols), w, parameterCount, cols, config);
+    }
+
+    async function projectWithRowspace(jacobian, w, config) {
+      return projectColumnMajor(jacobian, w, config.parameterCount, config.batchSize, config);
+    }
+
+    function prepareCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const width = Math.max(320, Math.floor(rect.width));
+      const height = Math.max(260, Math.floor(rect.height));
+      if (canvas.width !== Math.floor(width * ratio) || canvas.height !== Math.floor(height * ratio)) {
+        canvas.width = Math.floor(width * ratio);
+        canvas.height = Math.floor(height * ratio);
+      }
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      return { ctx, width, height };
+    }
+
+    function drawChart(configs = {}) {
+      const { ctx, width, height } = prepareCanvas();
+      const left = 66;
+      const right = 20;
+      const top = 18;
+      const bottom = 42;
+      const plotW = width - left - right;
+      const plotH = height - top - bottom;
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+
+      const values = [
+        ...gradientHistory.map((row) => row.distance),
+        ...hessianHistory.map((row) => row.distance),
+        ...combinedHistory.map((row) => row.distance)
+      ];
+      const maxY = Math.max(1e-12, ...values);
+      const minY = 0;
+      const maxX = Math.max(
+        1,
+        gradientHistory[gradientHistory.length - 1]?.step || 1,
+        hessianHistory[hessianHistory.length - 1]?.step || 1,
+        combinedHistory[combinedHistory.length - 1]?.step || 1
+      );
+      const xScale = (x) => left + (x / maxX) * plotW;
+      const yScale = (y) => top + ((maxY - y) / (maxY - minY)) * plotH;
+
+      ctx.font = "12px Inter, system-ui, sans-serif";
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i += 1) {
+        const t = i / 4;
+        const y = top + (1 - t) * plotH;
+        const value = minY + t * (maxY - minY);
+        ctx.strokeStyle = colors.grid;
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(left + plotW, y);
+        ctx.stroke();
+        ctx.fillStyle = colors.muted;
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        ctx.fillText(formatNumber(value), left - 8, y);
+      }
+
+      for (let i = 0; i <= 4; i += 1) {
+        const t = i / 4;
+        const x = left + t * plotW;
+        const step = Math.round(t * maxX);
+        ctx.strokeStyle = "rgba(229, 235, 240, 0.7)";
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x, top + plotH);
+        ctx.stroke();
+        ctx.fillStyle = colors.muted;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText(String(step), x, top + plotH + 12);
+      }
+
+      ctx.strokeStyle = colors.ink;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(left, top + plotH);
+      ctx.lineTo(left + plotW, top + plotH);
+      ctx.stroke();
+
+      function drawSeries(series, color) {
+        if (series.length === 0) return;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.6;
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        series.forEach((row, index) => {
+          const x = xScale(row.step);
+          const y = yScale(row.distance);
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      drawSeries(gradientHistory, colors.amber);
+      drawSeries(hessianHistory, colors.blue);
+      drawSeries(combinedHistory, colors.green);
+
+      if (gradientHistory.length > 0) {
+        const last = gradientHistory[gradientHistory.length - 1];
+        ctx.fillStyle = colors.amber;
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(xScale(last.step), yScale(last.distance), 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      if (hessianHistory.length > 0) {
+        const last = hessianHistory[hessianHistory.length - 1];
+        ctx.fillStyle = colors.blue;
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(xScale(last.step), yScale(last.distance), 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      if (combinedHistory.length > 0) {
+        const last = combinedHistory[combinedHistory.length - 1];
+        ctx.fillStyle = colors.green;
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(xScale(last.step), yScale(last.distance), 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+    }
+
+    function renderSummary(gradientConfig, hessianConfig, combinedConfig) {
+      const gradientLast = gradientHistory[gradientHistory.length - 1] || { step: 0, distance: 0, rank: 0 };
+      const hessianLast = hessianHistory[hessianHistory.length - 1] || { step: 0, distance: 0, rank: 0 };
+      const combinedLast = combinedHistory[combinedHistory.length - 1] || { step: 0, distance: 0, rank: 0 };
+      const currentStep = Math.max(gradientLast.step, hessianLast.step, combinedLast.step);
+      summaryEl.innerHTML = [
+        metric("Steps", formatInteger(currentStep)),
+        metric("Gradient distance", formatNumber(gradientLast.distance)),
+        metric("Hessian distance", formatNumber(hessianLast.distance)),
+        metric("2-Jet distance", formatNumber(combinedLast.distance))
+      ].join("");
+      chartLabel.textContent = `gradient ${formatNumber(gradientLast.distance)} | hessian ${formatNumber(hessianLast.distance)} | 2-Jet ${formatNumber(combinedLast.distance)}`;
+    }
+
+    function setRunButton(symbol, label) {
+      runButton.textContent = symbol;
+      runButton.setAttribute("aria-label", label);
+      runButton.title = label;
+    }
+
+    async function waitIfPaused(session) {
+      while (session.paused && session.token === runToken) {
+        await new Promise((resolve) => setTimeout(resolve, 80));
+      }
+    }
+
+    function handleRunButtonClick() {
+      if (activeSession && !activeSession.completed) {
+        activeSession.paused = !activeSession.paused;
+        setRunButton(activeSession.paused ? PLAY_SYMBOL : PAUSE_SYMBOL, activeSession.paused ? "Play" : "Pause");
+        return;
+      }
+      return runExperiment();
+    }
+
+    async function runExperiment() {
+      const token = ++runToken;
+      let gradientConfig;
+      let hessianConfig;
+      let combinedConfig;
+      try {
+        ({ gradientConfig, hessianConfig, combinedConfig } = readSharedConfigs());
+      } catch (error) {
+        chartLabel.textContent = error.message;
+        return;
+      }
+
+      activeSession = {
+        token,
+        paused: false,
+        completed: false,
+        step: 0
+      };
+      setRunButton(PAUSE_SYMBOL, "Pause");
+      gradientHistory = [];
+      hessianHistory = [];
+      combinedHistory = [];
+      drawChart({ gradient: gradientConfig, hessian: hessianConfig, combined: combinedConfig });
+
+      try {
+        const initRng = makeRng(gradientConfig.seed);
+        const gradientRng = makeRng(gradientConfig.seed + 0x9E3779B9);
+        const hessianRng = makeRng(hessianConfig.seed + 0xD1B54A32);
+        const combinedRng = makeRng(combinedConfig.seed + 0x94D049BB);
+        const sharedTheta0 = initializeTheta(gradientConfig, initRng);
+        const sharedThetaStar = makeTargetTheta(sharedTheta0, gradientConfig, initRng);
+        const gradientTheta = new Float64Array(sharedTheta0);
+        const hessianTheta = new Float64Array(sharedTheta0);
+        const combinedTheta = new Float64Array(sharedTheta0);
+
+        gradientHistory.push({
+          step: 0,
+          distance: vectorNorm(vectorDifference(sharedThetaStar, gradientTheta)),
+          rank: 0
+        });
+        hessianHistory.push({
+          step: 0,
+          distance: vectorNorm(vectorDifference(sharedThetaStar, hessianTheta)),
+          rank: 0
+        });
+        combinedHistory.push({
+          step: 0,
+          distance: vectorNorm(vectorDifference(sharedThetaStar, combinedTheta)),
+          rank: 0
+        });
+        renderSummary(gradientConfig, hessianConfig, combinedConfig);
+        drawChart({ gradient: gradientConfig, hessian: hessianConfig, combined: combinedConfig });
+
+        let lastRender = performance.now();
+        let step = 0;
+
+        while (token === runToken) {
+          if (token !== runToken) return;
+          await waitIfPaused(activeSession);
+          if (token !== runToken) return;
+          activeSession.step = step;
+
+          const gradientX = sampleInputs(gradientConfig, gradientRng);
+          const jacobian = batchJacobian(gradientTheta, gradientX, gradientConfig);
+          const gradientW = vectorDifference(sharedThetaStar, gradientTheta);
+          const gradientProjection = await projectWithRowspace(jacobian, gradientW, gradientConfig);
+          addInPlace(gradientTheta, gradientProjection.update);
+          const gradientRow = {
+            step: step + 1,
+            distance: vectorNorm(vectorDifference(sharedThetaStar, gradientTheta)),
+            rank: gradientProjection.rank
+          };
+
+          const hessianX = sampleInputs(hessianConfig, hessianRng);
+          const hessianA = inputParameterMatrix(hessianTheta, hessianX, hessianConfig);
+          const hessianW = vectorDifference(sharedThetaStar, hessianTheta);
+          const hessianProjection = await projectWithHessianSpan(hessianA, hessianW, hessianConfig);
+          addInPlace(hessianTheta, hessianProjection.update);
+          const hessianRow = {
+            step: step + 1,
+            distance: vectorNorm(vectorDifference(sharedThetaStar, hessianTheta)),
+            rank: hessianProjection.rank
+          };
+
+          const combinedX = sampleInputs(combinedConfig, combinedRng);
+          const combinedA = combinedJetMatrix(combinedTheta, combinedX, combinedConfig);
+          const combinedW = vectorDifference(sharedThetaStar, combinedTheta);
+          const combinedProjection = await projectWithHessianSpan(combinedA, combinedW, combinedConfig);
+          addInPlace(combinedTheta, combinedProjection.update);
+          const combinedRow = {
+            step: step + 1,
+            distance: vectorNorm(vectorDifference(sharedThetaStar, combinedTheta)),
+            rank: combinedProjection.rank
+          };
+
+          step += 1;
+
+          const now = performance.now();
+          if (step === 1 || now - lastRender > 80) {
+            gradientHistory.push(gradientRow);
+            hessianHistory.push(hessianRow);
+            combinedHistory.push(combinedRow);
+            setRankBadges("gradient", gradientConfig.maxRank, gradientConfig.parameterCount);
+            setRankBadges("hessian", hessianConfig.maxRank, hessianConfig.parameterCount);
+            setRankBadges("combined", combinedConfig.maxRank, combinedConfig.parameterCount);
+            renderSummary(gradientConfig, hessianConfig, combinedConfig);
+            drawChart({ gradient: gradientConfig, hessian: hessianConfig, combined: combinedConfig });
+            activeSession.step = step;
+            lastRender = performance.now();
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+          }
+        }
+      } catch (error) {
+        chartLabel.textContent = error.message;
+        if (activeSession && activeSession.token === token) activeSession.completed = true;
+        setRunButton(PLAY_SYMBOL, "Play");
+      } finally {
+        if (token === runToken && activeSession) activeSession.completed = true;
+      }
+    }
+
+    runButton.addEventListener("click", handleRunButtonClick);
+    window.addEventListener("resize", () => {
+      try {
+        drawChart({
+          gradient: readConfig("gradient"),
+          hessian: readConfig("hessian"),
+          combined: readConfig("combined")
+        });
+      } catch {
+        drawChart();
+      }
+    });
+
+    attachRankListeners();
+    updateRankBadges();
+    resetPreviewFromInputs();
+  </script>
+</body>
+</html>
